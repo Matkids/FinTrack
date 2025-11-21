@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - Company Financial Management{% endblock %}
+
+{% block extra_css %}
+    <link href="{% static 'dist/output.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        // Modal functionality for viewing attachments
+        function openAttachmentModal(fileUrl, fileName) {
+            const modal = document.getElementById('attachmentModal');
+            const fileNameEl = document.getElementById('modalFileName');
+            const fileContentEl = document.getElementById('modalFileContent');
+            const downloadBtn = document.getElementById('downloadFileBtn');
+            
+            if (!modal || !fileNameEl || !fileContentEl || !downloadBtn) {
+                console.error('Modal elements not found');
+                return;
+            }
+
+            // Set the file name and download link
+            fileNameEl.textContent = fileName;
+            downloadBtn.href = fileUrl;
+            
+            // Determine file type and display accordingly
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+            let contentHtml = '';
+            
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(fileExtension)) {
+                // Image file
+                contentHtml = `
+                    <img src="${fileUrl}" alt="${fileName}" class="max-h-[60vh] max-w-full object-contain" 
+                         onerror="this.parentElement.innerHTML = '<p class=&quot;text-red-600&quot;>Unable to load image</p>'">
+                `;
+            } else if (['pdf'].includes(fileExtension)) {
+                // PDF file
+                contentHtml = `
+                    <iframe src="${fileUrl}" class="w-full h-[60vh] border-0" 
+                            title="PDF Viewer" 
+                            onerror="this.parentElement.innerHTML = '<p class=&quot;text-red-600&quot;>Unable to load PDF</p>'">
+                    </iframe>
+                `;
+            } else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'].includes(fileExtension)) {
+                // Document file - show icon and download option
+                let iconClass = 'fas fa-file-word text-blue-500';
+                if (['xls', 'xlsx'].includes(fileExtension)) {
+                    iconClass = 'fas fa-file-excel text-green-500';
+                } else if (['ppt', 'pptx'].includes(fileExtension)) {
+                    iconClass = 'fas fa-file-powerpoint text-red-500';
+                } else if (['txt', 'csv'].includes(fileExtension)) {
+                    iconClass = 'fas fa-file-alt text-gray-500';
+                }
+                
+                contentHtml = `
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="${iconClass} text-6xl mb-4"></i>
+                        <p class="text-gray-700 mb-4">This is a ${fileExtension.toUpperCase()} document</p>
+                        <a href="${fileUrl}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
+                            Open in New Tab <i class="fas fa-external-link-alt ml-2"></i>
+                        </a>
+                    </div>
+                `;
+            } else {
+                // Other file types - show generic icon and download option
+                contentHtml = `
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="fas fa-file text-6xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-700 mb-2">File: ${fileName}</p>
+                        <p class="text-gray-500 mb-4">Click below to download</p>
+                        <a href="${fileUrl}" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg" target="_blank">
+                            <i class="fas fa-download mr-2"></i>Download File
+                        </a>
+                    </div>
+                `;
+            }
+            
+            fileContentEl.innerHTML = contentHtml;
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden'); // Prevent background scrolling
+        }
+
+        function closeAttachmentModal() {
+            const modal = document.getElementById('attachmentModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden'); // Allow scrolling again
+            }
+        }
+
+        // Close modal when clicking outside content area
+        document.getElementById('attachmentModal')?.addEventListener('click', function(e) {
+            if (e.target.id === 'attachmentModal') {
+                closeAttachmentModal();
+            }
+        });
+
+        // Close modal when pressing Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('attachmentModal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    closeAttachmentModal();
+                }
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <!-- Modal for viewing attachments -->
+    <div id="attachmentModal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full relative">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 id="modalFileName" class="text-lg font-medium text-gray-900 truncate max-w-xs"></h3>
+                <div class="flex space-x-2">
+                    <a id="downloadFileBtn" href="#" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full"
+                       title="Download File">
+                        <i class="fas fa-download"></i>
+                    </a>
+                    <button onclick="closeAttachmentModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded-full"
+                            title="Close Modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6 flex items-center justify-center min-h-[400px]">
+                <div id="modalFileContent" class="text-center w-full">
+                    <p class="text-gray-600">Loading file...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% block main_content %}{% endblock %}
+{% endblock %}

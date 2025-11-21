@@ -1,0 +1,67 @@
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Environment variables file
+.env
+.env.local
+
+# Database
+*.sqlite3
+*.sqlite3-journal
+
+# Media files (user uploads)
+/media/
+uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Coverage reports
+htmlcov/
+.coverage
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django
+*.pot
+*.pyo
+MANIFEST
+db.sqlite3
+media/
+staticfiles/
+
+# Local configuration files
+local_settings.py

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate Cash Flow Forecast{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-primary {
+        background: linear-gradient(to right, #3b82f6, #2563eb);
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(to right, #2563eb, #1d4ed8);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(to right, #4b5563, #374151);
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary:hover {
+        background: linear-gradient(to right, #374151, #1f2937);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-lg mx-auto bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center mb-6">
+            <i class="fas fa-chart-line text-blue-600 text-2xl mr-3"></i>
+            <h1 class="text-2xl font-bold text-gray-800">Generate Cash Flow Forecast</h1>
+        </div>
+
+        <form method="post" id="forecastForm" class="bg-gray-50 p-6 rounded-lg">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label for="months_ahead" class="block text-gray-700 font-medium mb-3">Months to Forecast Ahead</label>
+                <input type="number" id="months_ahead" name="months_ahead" value="6" min="1" max="24"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base">
+                <p class="text-gray-500 text-sm mt-2">Enter number of months to forecast (1-24)</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <a href="{% url 'analytics_dashboard' %}"
+                   class="btn-secondary w-full sm:w-auto">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Analytics
+                </a>
+                <button type="submit"
+                        class="btn-primary w-full sm:w-auto flex items-center">
+                    <i class="fas fa-chart-line mr-2"></i>
+                    Generate Forecast
+                </button>
+            </div>
+        </form>
+
+        <div id="result" class="mt-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm hidden">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                Results
+            </h2>
+            <div id="resultContent" class="p-3 bg-green-50 border border-green-200 rounded-md"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('forecastForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const months_ahead = document.getElementById('months_ahead').value;
+
+    fetch('/analytics/forecast/cash-flow/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'months_ahead=' + months_ahead
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultDiv = document.getElementById('result');
+        const resultContent = document.getElementById('resultContent');
+
+        if (data.success) {
+            resultContent.innerHTML = `
+                <p class="text-green-700 font-medium">${data.message}</p>
+                <div class="mt-3">
+                    <h3 class="font-medium text-gray-800 mb-2">Predicted Values:</h3>
+                    <ul class="space-y-1">
+                        ${data.predictions.map(pred =>
+                            `<li class="text-sm flex items-center"><i class="fas fa-calendar-day text-blue-500 mr-2"></i> ${new Date(pred.date).toLocaleDateString()}: <span class="font-medium ml-1">$${parseFloat(pred.value).toFixed(2)}</span></li>`
+                        ).join('')}
+                    </ul>
+                </div>
+            `;
+            resultDiv.classList.remove('hidden');
+        } else {
+            resultContent.innerHTML = `<p class="text-red-700 font-medium">Error: ${data.message || 'Failed to generate forecast'}</p>`;
+            resultDiv.classList.remove('hidden');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const resultContent = document.getElementById('resultContent');
+        resultContent.innerHTML = '<p class="text-red-700 font-medium">An error occurred while generating forecast.</p>';
+        document.getElementById('result').classList.remove('hidden');
+    });
+});
+</script>
+{% endblock %}

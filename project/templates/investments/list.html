@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Investments - FinTrack{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-900">Investments</h1>
+        <a href="{% url 'investment_create' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-plus mr-2"></i>Add Investment
+        </a>
+    </div>
+</div>
+
+<!-- Investments Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for investment in investments %}
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">{{ investment.name }}</h3>
+                    <p class="text-sm text-gray-500">{{ investment.get_investment_type_display }}</p>
+                </div>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                    {% if investment.risk_level == 1 %}bg-green-100 text-green-800
+                    {% elif investment.risk_level == 2 %}bg-yellow-100 text-yellow-800
+                    {% else %}bg-red-100 text-red-800{% endif %}">
+                    {{ investment.get_risk_level_display }} Risk
+                </span>
+            </div>
+            
+            <div class="mt-4 space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Initial Amount:</span>
+                    <span class="text-sm font-medium">${{ investment.initial_amount|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Current Value:</span>
+                    <span class="text-sm font-medium">${{ investment.current_value|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Expected ROI:</span>
+                    <span class="text-sm font-medium">{{ investment.expected_roi|floatformat:2 }}%</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Actual ROI:</span>
+                    <span class="text-sm font-medium">{{ investment.roi_percentage|floatformat:2 }}%</span>
+                </div>
+                {% if investment.profit_loss >= 0 %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Profit:</span>
+                        <span class="text-sm font-medium text-green-600">${{ investment.profit_loss|floatformat:2 }}</span>
+                    </div>
+                {% else %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Loss:</span>
+                        <span class="text-sm font-medium text-red-600">${{ investment.profit_loss|floatformat:2 }}</span>
+                    </div>
+                {% endif %}
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Purchase Date:</span>
+                    <span class="text-sm font-medium">{{ investment.purchase_date }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gray-50 px-6 py-3 flex justify-end space-x-2">
+            <a href="{% url 'investment_update' investment.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                <i class="fas fa-edit"></i>
+            </a>
+            <a href="{% url 'investment_delete' investment.pk %}" class="text-red-600 hover:text-red-900">
+                <i class="fas fa-trash"></i>
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full text-center py-8">
+        <p class="text-gray-500">No investments found</p>
+        <a href="{% url 'investment_create' %}" class="mt-4 inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+            Add Your First Investment
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

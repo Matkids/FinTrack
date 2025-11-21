@@ -1,0 +1,449 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Add CSRF token to a meta tag for JavaScript to access
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create meta tag for CSRF token
+            const csrfToken = '{{ csrf_token }}';
+            const meta = document.createElement('meta');
+            meta.name = 'csrf-token';
+            meta.content = csrfToken;
+            document.getElementsByTagName('head')[0].appendChild(meta);
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+        <p class="text-gray-600 mt-2">Advanced insights and predictions for your financial data</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900">Recent Forecasts</h3>
+            <p class="text-3xl font-bold text-blue-600 mt-2">{{ forecasts|length }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900">Anomalies Detected</h3>
+            <p class="text-3xl font-bold text-red-600 mt-2">{{ anomalies|length }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900">Recommendations</h3>
+            <p class="text-3xl font-bold text-green-600 mt-2">{{ recommendations|length }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900">Active Models</h3>
+            <p class="text-3xl font-bold text-purple-600 mt-2">{{ active_models_count|default:0 }}</p>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <style>
+        .btn-analytics-card {
+            background: linear-gradient(to bottom right, #f0f9ff, #e0f2fe);
+            border: 1px solid #3b82f6;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .btn-analytics-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .btn-analytics {
+            width: 100%;
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            color: white;
+            font-weight: bold;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-analytics:hover {
+            background: linear-gradient(to right, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+        }
+        .btn-analytics-red {
+            background: linear-gradient(to right, #dc2626, #b91c1c);
+        }
+        .btn-analytics-red:hover {
+            background: linear-gradient(to right, #b91c1c, #991b1b);
+        }
+        .btn-analytics-green {
+            background: linear-gradient(to right, #059669, #047857);
+        }
+        .btn-analytics-green:hover {
+            background: linear-gradient(to right, #047857, #036d4f);
+        }
+        .btn-analytics-purple {
+            background: linear-gradient(to right, #7e22ce, #6d28d9);
+        }
+        .btn-analytics-purple:hover {
+            background: linear-gradient(to right, #6d28d9, #5b21b6);
+        }
+    </style>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="p-4 flex justify-center items-center">
+            <div class="btn-analytics-card w-full max-w-[200px]">
+                <button id="forecastBtn" class="btn-analytics justify-center" style="color: white !important; display: flex; flex-direction: column; align-items: center;">
+                    <i class="fas fa-chart-line text-xl mb-2"></i>
+                    <span class="font-semibold">Generate Forecast</span>
+                </button>
+            </div>
+        </div>
+        <div class="p-4 flex justify-center items-center">
+            <div class="btn-analytics-card w-full max-w-[200px]" style="background: linear-gradient(to bottom right, #fef2f2, #fee2e2); border-color: #ef4444;">
+                <button id="anomalyBtn" class="btn-analytics btn-analytics-red justify-center" style="color: white !important; display: flex; flex-direction: column; align-items: center;">
+                    <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
+                    <span class="font-semibold">Detect Anomalies</span>
+                </button>
+            </div>
+        </div>
+        <div class="p-4 flex justify-center items-center">
+            <div class="btn-analytics-card w-full max-w-[200px]" style="background: linear-gradient(to bottom right, #ecfdf5, #d1fae5); border-color: #10b981;">
+                <button id="recommendationBtn" class="btn-analytics btn-analytics-green justify-center" style="color: white !important; display: flex; flex-direction: column; align-items: center;">
+                    <i class="fas fa-lightbulb text-xl mb-2"></i>
+                    <span class="font-semibold">Generate Recommendations</span>
+                </button>
+            </div>
+        </div>
+        <div class="p-4 flex justify-center items-center">
+            <div class="btn-analytics-card w-full max-w-[200px]" style="background: linear-gradient(to bottom right, #f3e8ff, #e9d5ff); border-color: #8b5cf6;">
+                <button id="scenarioBtn" class="btn-analytics btn-analytics-purple justify-center" style="color: white !important; display: flex; flex-direction: column; align-items: center;">
+                    <i class="fas fa-project-diagram text-xl mb-2"></i>
+                    <span class="font-semibold">Run Scenario</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forecasts Section -->
+    <div class="bg-white rounded-lg shadow-lg mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-chart-line text-blue-600 mr-3"></i>
+                Financial Forecasts
+            </h2>
+        </div>
+        <div class="p-6">
+            {% if forecasts %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Predicted Value</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for forecast in forecasts %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ forecast.forecast_type|title }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ forecast.prediction_date }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ forecast.predicted_value|floatformat:2 }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ forecast.model_used }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <button class="text-xs bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded transition duration-200">
+                                        View Details
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-gray-500">No forecasts available. Generate forecasts to see predictions.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Anomalies Section -->
+    <div class="bg-white rounded-lg shadow-lg mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>
+                Detected Anomalies
+            </h2>
+        </div>
+        <div class="p-6">
+            {% if anomalies %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detected At</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for anomaly in anomalies %}
+                            <tr class="{% if anomaly.severity == 3 %}bg-red-50{% elif anomaly.severity == 2 %}bg-yellow-50{% else %}bg-green-50{% endif %}">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ anomaly.anomaly_type|title }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ anomaly.detected_at|date:"M j, Y H:i" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                        {% if anomaly.severity == 3 %}bg-red-100 text-red-800{% elif anomaly.severity == 2 %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                        {% if anomaly.severity == 3 %}High{% elif anomaly.severity == 2 %}Medium{% else %}Low{% endif %}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ anomaly.detected_value|floatformat:2 }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 max-w-md">{{ anomaly.description }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <button class="text-xs bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded transition duration-200">
+                                        Review
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-gray-500">No anomalies detected. Run anomaly detection to identify unusual patterns.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recommendations Section -->
+    <div class="bg-white rounded-lg shadow-lg">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-lightbulb text-green-600 mr-3"></i>
+                Smart Recommendations
+            </h2>
+        </div>
+        <div class="p-6">
+            {% if recommendations %}
+                <div class="space-y-4">
+                    {% for recommendation in recommendations %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-medium text-gray-900">{{ recommendation.title }}</h3>
+                                <p class="text-gray-600 mt-1">{{ recommendation.description }}</p>
+                                <p class="text-sm text-gray-500 mt-2"><strong>Suggested Action:</strong> {{ recommendation.suggested_action }}</p>
+                                {% if recommendation.impact_estimate %}
+                                    <p class="text-sm text-gray-500 mt-1"><strong>Estimated Impact:</strong> ${{ recommendation.impact_estimate|floatformat:2 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 mb-2">
+                                    {{ recommendation.recommendation_type|title }}
+                                </span>
+                                <div class="text-sm text-gray-500 mb-2">
+                                    Confidence: {{ recommendation.confidence_score|floatformat:0 }}%
+                                </div>
+                                <button class="text-sm bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded transition duration-200">
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-500">No recommendations available. Generate recommendations to get insights.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Scripts -->
+<script>
+// Function to get CSRF token
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value :
+           document.querySelector('input[name="csrfmiddlewaretoken"]') ? document.querySelector('input[name="csrfmiddlewaretoken"]').value :
+           document.querySelector('meta[name=csrf-token]') ? document.querySelector('meta[name=csrf-token]').getAttribute('content') :
+           '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Forecast button
+    document.getElementById('forecastBtn').addEventListener('click', function() {
+        // Show modal to get number of months ahead
+        const months = prompt('Enter number of months ahead to forecast (default: 6):', '6');
+        if (months !== null) {
+            // Show loading state
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+
+            fetch('/analytics/forecast/cash-flow/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: 'months_ahead=' + parseInt(months)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload(); // Reload to see new forecasts
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while generating forecast: ' + error.message);
+            })
+            .finally(() => {
+                // Restore button state
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                btn.innerHTML = originalText;
+            });
+        }
+    });
+
+    // Anomaly detection button
+    document.getElementById('anomalyBtn').addEventListener('click', function() {
+        // Show loading state
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.classList.add('opacity-75');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Analyzing...';
+
+        fetch('/analytics/anomalies/detect/', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert(`Successfully detected ${data.anomalies_detected} anomalies.`);
+                location.reload(); // Reload to see new anomalies
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while detecting anomalies: ' + error.message);
+        })
+        .finally(() => {
+            // Restore button state
+            btn.disabled = false;
+            btn.classList.remove('opacity-75');
+            btn.innerHTML = originalText;
+        });
+    });
+
+    // Recommendation button
+    document.getElementById('recommendationBtn').addEventListener('click', function() {
+        // Show loading state
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.classList.add('opacity-75');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Analyzing...';
+
+        fetch('/analytics/recommendations/generate/', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert(`Successfully generated ${data.recommendations_created} recommendations.`);
+                location.reload(); // Reload to see new recommendations
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while generating recommendations: ' + error.message);
+        })
+        .finally(() => {
+            // Restore button state
+            btn.disabled = false;
+            btn.classList.remove('opacity-75');
+            btn.innerHTML = originalText;
+        });
+    });
+
+    // Scenario button
+    document.getElementById('scenarioBtn').addEventListener('click', function() {
+        // Show modal or redirect to scenario page
+        window.location.href = '/analytics/scenarios/run/';
+    });
+
+    // Add functionality to table action buttons
+    // Add event listeners to dynamically created buttons
+    document.addEventListener('click', function(e) {
+        // Handle "View Details" button for forecasts
+        if (e.target.classList.contains('bg-blue-600') && e.target.textContent.includes('View Details')) {
+            const forecastRow = e.target.closest('tr');
+            const forecastType = forecastRow.cells[0].textContent.trim();
+            const forecastDate = forecastRow.cells[1].textContent.trim();
+            const forecastValue = forecastRow.cells[2].textContent.trim();
+
+            alert(`Forecast Details:\nType: ${forecastType}\nDate: ${forecastDate}\nPredicted Value: ${forecastValue}`);
+        }
+
+        // Handle "Review" button for anomalies
+        if (e.target.classList.contains('bg-blue-600') && e.target.textContent.includes('Review')) {
+            const anomalyRow = e.target.closest('tr');
+            const anomalyType = anomalyRow.cells[0].textContent.trim();
+            const anomalyDate = anomalyRow.cells[1].textContent.trim();
+            const anomalyAmount = anomalyRow.cells[3].textContent.trim();
+
+            alert(`Review Anomaly:\nType: ${anomalyType}\nDetected: ${anomalyDate}\nAmount: ${anomalyAmount}`);
+        }
+
+        // Handle "Apply" buttons for recommendations
+        if (e.target.classList.contains('bg-green-600') && e.target.textContent.includes('Apply')) {
+            const recElement = e.target.closest('.border.border-gray-200');
+            if (recElement) {
+                const title = recElement.querySelector('h3').textContent;
+                alert(`Applied recommendation: ${title}\nStatus updated successfully.`);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

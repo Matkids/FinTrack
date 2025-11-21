@@ -1,0 +1,601 @@
+{% extends 'base.html' %}
+
+{% block title %}Run Scenario Analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-primary {
+        background: linear-gradient(to right, #8b5cf6, #7e22ce);
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(to right, #7e22ce, #6d28d9);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(to right, #4b5563, #374151);
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary:hover {
+        background: linear-gradient(to right, #374151, #1f2937);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Scenario parameters configuration with sliders
+        const scenarioParams = {
+            revenue_change: `
+                <div class="space-y-6">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <label for="change_percentage" class="block text-gray-700 font-medium mb-2">Change Percentage (%)</label>
+                        <input type="range" id="change_percentage_slider" min="-100" max="500" value="10" step="0.1"
+                               class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="document.getElementById('change_percentage').value = this.value; updateResultPreview()">
+                        <div class="flex justify-between mt-1">
+                            <span class="text-sm text-gray-600">-100%</span>
+                            <input type="number" id="change_percentage" name="parameters.change_percentage"
+                                   value="10" step="0.1" min="-100" max="500"
+                                   class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                                   onchange="document.getElementById('change_percentage_slider').value = this.value; updateResultPreview()"
+                                   oninput="updateResultPreview()">
+                            <span class="text-sm text-gray-600">500%</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-2">Enter percentage change (e.g., 10 for 10% increase, -5 for 5% decrease)</p>
+                    </div>
+
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <label for="period_months" class="block text-gray-700 font-medium mb-2">Projection Period (Months)</label>
+                        <input type="range" id="period_months_slider" min="1" max="36" value="12" step="1"
+                               class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="document.getElementById('period_months').value = this.value; updateResultPreview()">
+                        <div class="flex justify-between mt-1">
+                            <span class="text-sm text-gray-600">1</span>
+                            <input type="number" id="period_months" name="parameters.period_months" value="12" min="1" max="36"
+                                   class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                                   onchange="document.getElementById('period_months_slider').value = this.value; updateResultPreview()"
+                                   oninput="updateResultPreview()">
+                            <span class="text-sm text-gray-600">36</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-2">Number of months to project</p>
+                    </div>
+
+                    <!-- Preview Result -->
+                    <div id="revenue_preview" class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                        <h4 class="font-medium text-gray-800 mb-2">Preview</h4>
+                        <p class="text-sm text-gray-700">With a <span id="preview_change_percent">10</span>% increase over <span id="preview_period_months">12</span> months, estimated projections will be calculated.</p>
+                    </div>
+                </div>
+            `,
+            expense_reduction: `
+                <div class="space-y-6">
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <label for="reduction_percentage" class="block text-gray-700 font-medium mb-2">Reduction Percentage (%)</label>
+                        <input type="range" id="reduction_percentage_slider" min="0" max="90" value="10" step="0.1"
+                               class="w-full h-2 bg-red-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="document.getElementById('reduction_percentage').value = this.value; updateResultPreview()">
+                        <div class="flex justify-between mt-1">
+                            <span class="text-sm text-gray-600">0%</span>
+                            <input type="number" id="reduction_percentage" name="parameters.reduction_percentage"
+                                   value="10" step="0.1" min="0" max="90"
+                                   class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-base"
+                                   onchange="document.getElementById('reduction_percentage_slider').value = this.value; updateResultPreview()"
+                                   oninput="updateResultPreview()">
+                            <span class="text-sm text-gray-600">90%</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-2">Enter percentage reduction (e.g., 10 for 10% reduction)</p>
+                    </div>
+
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <label for="period_months" class="block text-gray-700 font-medium mb-2">Projection Period (Months)</label>
+                        <input type="range" id="period_months_slider" min="1" max="36" value="12" step="1"
+                               class="w-full h-2 bg-red-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="document.getElementById('period_months').value = this.value; updateResultPreview()">
+                        <div class="flex justify-between mt-1">
+                            <span class="text-sm text-gray-600">1</span>
+                            <input type="number" id="period_months" name="parameters.period_months" value="12" min="1" max="36"
+                                   class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-base"
+                                   onchange="document.getElementById('period_months_slider').value = this.value; updateResultPreview()"
+                                   oninput="updateResultPreview()">
+                            <span class="text-sm text-gray-600">36</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-2">Number of months to project</p>
+                    </div>
+
+                    <!-- Preview Result -->
+                    <div id="expense_preview" class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                        <h4 class="font-medium text-gray-800 mb-2">Preview</h4>
+                        <p class="text-sm text-gray-700">Reducing expenses by <span id="preview_reduction_percent">10</span>% over <span id="preview_period_months_2">12</span> months will result in projected savings.</p>
+                    </div>
+                </div>
+            `,
+            investment_impact: `
+                <div class="space-y-6">
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <label for="initial_investment" class="block text-gray-700 font-medium mb-2">Initial Investment ($)</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="range" id="initial_investment_slider" min="1000" max="100000" value="10000" step="1000"
+                                   class="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer"
+                                   oninput="document.getElementById('initial_investment').value = this.value; updateResultPreview()">
+                            <input type="number" id="initial_investment" name="parameters.initial_investment" value="10000" step="100" min="1000"
+                                   class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-base"
+                                   onchange="document.getElementById('initial_investment_slider').value = this.value; updateResultPreview()"
+                                   oninput="updateResultPreview()">
+                        </div>
+                        <p class="text-gray-500 text-sm mt-2">Initial investment amount</p>
+                    </div>
+
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <label for="expected_roi" class="block text-gray-700 font-medium mb-2">Expected Annual ROI (%)</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="range" id="expected_roi_slider" min="1" max="50" value="8" step="0.1"
+                                   class="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer"
+                                   oninput="document.getElementById('expected_roi').value = this.value; updateResultPreview()">
+                            <input type="number" id="expected_roi" name="parameters.expected_roi" value="8" step="0.1" min="1" max="50"
+                                   class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-base"
+                                   onchange="document.getElementById('expected_roi_slider').value = this.value; updateResultPreview()"
+                                   oninput="updateResultPreview()">
+                        </div>
+                        <p class="text-gray-500 text-sm mt-2">Expected annual return on investment</p>
+                    </div>
+
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <label for="period_months" class="block text-gray-700 font-medium mb-2">Projection Period (Months)</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="range" id="period_months_slider" min="12" max="60" value="24" step="1"
+                                   class="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer"
+                                   oninput="document.getElementById('period_months').value = this.value; updateResultPreview()">
+                            <input type="number" id="period_months" name="parameters.period_months" value="24" min="12" max="60"
+                                   class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-base"
+                                   onchange="document.getElementById('period_months_slider').value = this.value; updateResultPreview()"
+                                   oninput="updateResultPreview()">
+                        </div>
+                        <p class="text-gray-500 text-sm mt-2">Number of months to project</p>
+                    </div>
+
+                    <!-- Preview Result -->
+                    <div id="investment_preview" class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                        <h4 class="font-medium text-gray-800 mb-2">Preview</h4>
+                        <p class="text-sm text-gray-700">With $<span id="preview_initial_investment">10000</span> invested at <span id="preview_expected_roi">8</span>% annual ROI over <span id="preview_period_months_3">24</span> months, your investment will grow.</p>
+                    </div>
+                </div>
+            `
+        };
+
+        // Function to update preview values
+        function updateResultPreview() {
+            const scenarioType = document.getElementById('scenario_type').value;
+
+            if (scenarioType === 'revenue_change') {
+                document.getElementById('preview_change_percent').textContent = document.getElementById('change_percentage')?.value || '10';
+                document.getElementById('preview_period_months').textContent = document.getElementById('period_months')?.value || '12';
+            } else if (scenarioType === 'expense_reduction') {
+                document.getElementById('preview_reduction_percent').textContent = document.getElementById('reduction_percentage')?.value || '10';
+                document.getElementById('preview_period_months_2').textContent = document.getElementById('period_months')?.value || '12';
+            } else if (scenarioType === 'investment_impact') {
+                document.getElementById('preview_initial_investment').textContent = document.getElementById('initial_investment')?.value || '10000';
+                document.getElementById('preview_expected_roi').textContent = document.getElementById('expected_roi')?.value || '8';
+                document.getElementById('preview_period_months_3').textContent = document.getElementById('period_months')?.value || '24';
+            }
+        }
+
+        // Event listener for scenario type change
+        document.getElementById('scenario_type').addEventListener('change', function() {
+            const scenarioParamsDiv = document.getElementById('scenarioParams');
+            const runScenarioBtn = document.getElementById('runScenarioBtn');
+
+            if (this.value) {
+                scenarioParamsDiv.innerHTML = scenarioParams[this.value];
+                scenarioParamsDiv.classList.remove('hidden');
+                runScenarioBtn.disabled = false;
+
+                // Update preview for the newly selected type
+                setTimeout(updateResultPreview, 10);
+            } else {
+                scenarioParamsDiv.classList.add('hidden');
+                runScenarioBtn.disabled = true;
+            }
+        });
+
+        // Form submission handler
+        document.getElementById('scenarioForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const scenarioType = document.getElementById('scenario_type').value;
+            if (!scenarioType) {
+                alert('Please select a scenario type');
+                return;
+            }
+
+            // Collect all input values from current parameters
+            const params = {};
+            const inputs = document.querySelectorAll('#scenarioParams input[type="number"]');
+            inputs.forEach(input => {
+                // Extract parameter name from format like "parameters.key_name"
+                const paramName = input.name.replace('parameters.', '');
+                params[paramName] = input.type === 'number' ? parseFloat(input.value) : input.value;
+            });
+
+            // Show loading state
+            const btn = document.getElementById('runScenarioBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Analyzing...';
+
+            fetch('/analytics/scenarios/run/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `scenario_type=${scenarioType}&parameters=${JSON.stringify(params)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('result');
+                const resultContent = document.getElementById('resultContent');
+
+                if (data.success) {
+                    // Hide form inputs
+                    document.querySelector('form').style.display = 'none';
+
+                    // Prepare data for visualization
+                    const outcomes = data.predicted_outcomes;
+                    const scenarioTitle = scenarioType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                    let contentHTML = `
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center">
+                                <h2 class="text-xl font-semibold text-gray-800">${scenarioTitle} Analysis</h2>
+                                <button type="button" onclick="restartForm()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200">
+                                    Run Another Scenario
+                                </button>
+                            </div>
+                            <p class="text-gray-600">Analysis results based on your inputs</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    `;
+
+                    // Add specific content based on scenario type
+                    if (scenarioType === 'revenue_change') {
+                        contentHTML += `
+                            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                                <p class="text-sm text-gray-600">Current Monthly Revenue</p>
+                                <p class="text-2xl font-bold text-blue-600">$${outcomes.current_monthly_revenue?.toFixed(2) || '0.00'}</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                                <p class="text-sm text-gray-600">Projected Total Revenue</p>
+                                <p class="text-2xl font-bold text-green-600">$${outcomes.projected_total_revenue?.toFixed(2) || '0.00'}</p>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                                <p class="text-sm text-gray-600">Change Percentage</p>
+                                <p class="text-2xl font-bold text-purple-600">${outcomes.change_percentage?.toFixed(1) || '0.0'}%</p>
+                            </div>
+                        `;
+
+                        // Plot chart if monthly data exists
+                        if (outcomes.monthly_projections && Array.isArray(outcomes.monthly_projections)) {
+                            contentHTML += `
+                                <div class="col-span-full mb-6">
+                                    <h3 class="text-lg font-medium text-gray-800 mb-4">Monthly Projections</h3>
+                                    <div class="bg-white p-4 rounded-lg shadow">
+                                        <canvas id="revenueChart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            `;
+
+                            // Initialize chart after content is inserted
+                            setTimeout(() => {
+                                const ctx = document.getElementById('revenueChart').getContext('2d');
+                                const monthlyData = outcomes.monthly_projections;
+
+                                const dates = monthlyData.map(item => new Date(item.date).toLocaleDateString('en-US', {month: 'short', year: '2-digit'}));
+                                const incomeValues = monthlyData.map(item => item.projected_revenue);
+                                const baselineValue = outcomes.current_monthly_revenue || 0;
+                                const baselineValues = Array(monthlyData.length).fill(baselineValue);
+
+                                new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: dates,
+                                        datasets: [{
+                                            label: 'Projected Revenue',
+                                            data: incomeValues,
+                                            borderColor: 'rgb(74, 222, 128)',
+                                            backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                                            fill: false,
+                                            tension: 0.1
+                                        }, {
+                                            label: 'Current Revenue (Baseline)',
+                                            data: baselineValues,
+                                            borderColor: 'rgb(239, 68, 68)',
+                                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                            fill: false,
+                                            borderDash: [5, 5],
+                                            tension: 0.1
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        plugins: {
+                                            legend: {
+                                                position: 'top',
+                                            }
+                                        }
+                                    }
+                                });
+                            }, 100);
+                        }
+                    }
+                    else if (scenarioType === 'expense_reduction') {
+                        contentHTML += `
+                            <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                                <p class="text-sm text-gray-600">Current Monthly Expenses</p>
+                                <p class="text-2xl font-bold text-red-600">$${outcomes.current_monthly_expenses?.toFixed(2) || '0.00'}</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                                <p class="text-sm text-gray-600">Total Savings</p>
+                                <p class="text-2xl font-bold text-green-600">$${outcomes.total_savings?.toFixed(2) || '0.00'}</p>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                                <p class="text-sm text-gray-600">Reduction Percentage</p>
+                                <p class="text-2xl font-bold text-purple-600">${outcomes.reduction_percentage?.toFixed(1) || '0.0'}%</p>
+                            </div>
+                        `;
+
+                        // Plot chart if monthly data exists
+                        if (outcomes.monthly_projections && Array.isArray(outcomes.monthly_projections)) {
+                            contentHTML += `
+                                <div class="col-span-full mb-6">
+                                    <h3 class="text-lg font-medium text-gray-800 mb-4">Monthly Expense Projections</h3>
+                                    <div class="bg-white p-4 rounded-lg shadow">
+                                        <canvas id="expenseChart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            `;
+
+                            // Initialize chart after content is inserted
+                            setTimeout(() => {
+                                const ctx = document.getElementById('expenseChart').getContext('2d');
+                                const monthlyData = outcomes.monthly_projections;
+
+                                const dates = monthlyData.map(item => new Date(item.date).toLocaleDateString('en-US', {month: 'short', year: '2-digit'}));
+                                const projectedValues = monthlyData.map(item => item.projected_expenses);
+                                const baselineValue = outcomes.current_monthly_expenses || 0;
+                                const baselineValues = Array(monthlyData.length).fill(baselineValue);
+
+                                new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: dates,
+                                        datasets: [{
+                                            label: 'Projected Expenses',
+                                            data: projectedValues,
+                                            borderColor: 'rgb(239, 68, 68)',
+                                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                            fill: false,
+                                            tension: 0.1
+                                        }, {
+                                            label: 'Current Expenses (Baseline)',
+                                            data: baselineValues,
+                                            borderColor: 'rgb(255, 159, 64)',
+                                            backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                                            fill: false,
+                                            borderDash: [5, 5],
+                                            tension: 0.1
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        plugins: {
+                                            legend: {
+                                                position: 'top',
+                                            }
+                                        }
+                                    }
+                                });
+                            }, 100);
+                        }
+                    }
+                    else if (scenarioType === 'investment_impact') {
+                        contentHTML += `
+                            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                                <p class="text-sm text-gray-600">Initial Investment</p>
+                                <p class="text-2xl font-bold text-green-600">$${outcomes.initial_investment?.toFixed(2) || '0.00'}</p>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                                <p class="text-sm text-gray-600">Projected Final Value</p>
+                                <p class="text-2xl font-bold text-purple-600">$${outcomes.projected_value_end?.toFixed(2) || '0.00'}</p>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                                <p class="text-sm text-gray-600">Projected Gain</p>
+                                <p class="text-2xl font-bold text-blue-600">$${outcomes.projected_gain?.toFixed(2) || '0.00'}</p>
+                            </div>
+                        `;
+
+                        // Plot chart if monthly data exists
+                        if (outcomes.monthly_projections && Array.isArray(outcomes.monthly_projections)) {
+                            contentHTML += `
+                                <div class="col-span-full mb-6">
+                                    <h3 class="text-lg font-medium text-gray-800 mb-4">Investment Growth Projection</h3>
+                                    <div class="bg-white p-4 rounded-lg shadow">
+                                        <canvas id="investmentChart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            `;
+
+                            // Initialize chart after content is inserted
+                            setTimeout(() => {
+                                const ctx = document.getElementById('investmentChart').getContext('2d');
+                                const monthlyData = outcomes.monthly_projections;
+
+                                const dates = monthlyData.map(item => new Date(item.date).toLocaleDateString('en-US', {month: 'short', year: '2-digit'}));
+                                const investmentValues = monthlyData.map(item => item.projected_value);
+                                const gainValues = monthlyData.map(item => item.gained);
+
+                                new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: dates,
+                                        datasets: [{
+                                            label: 'Investment Value',
+                                            data: investmentValues,
+                                            borderColor: 'rgb(74, 222, 128)',
+                                            backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                                            fill: false,
+                                            tension: 0.1
+                                        }, {
+                                            label: 'Accumulated Gain',
+                                            data: gainValues,
+                                            borderColor: 'rgb(59, 130, 246)',
+                                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                            fill: false,
+                                            tension: 0.1
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        plugins: {
+                                            legend: {
+                                                position: 'top',
+                                            }
+                                        }
+                                    }
+                                });
+                            }, 100);
+                        }
+                    }
+
+                    contentHTML += `
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg border shadow-sm">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Detailed Analysis</h3>
+                            <pre class="text-sm text-gray-600 bg-gray-50 p-4 rounded overflow-x-auto">${JSON.stringify(outcomes, null, 2)}</pre>
+                        </div>
+                    `;
+
+                    resultContent.innerHTML = contentHTML;
+                    resultDiv.classList.remove('hidden');
+                } else {
+                    resultContent.innerHTML = `<p class="text-red-700 font-medium">Error: ${data.message || 'Failed to run scenario analysis'}</p>`;
+                    resultDiv.classList.remove('hidden');
+
+                    // Restore button state
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75');
+                    btn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const resultContent = document.getElementById('resultContent');
+                resultContent.innerHTML = '<p class="text-red-700 font-medium">An error occurred while running scenario analysis.</p>';
+                document.getElementById('result').classList.remove('hidden');
+
+                // Restore button state
+                const btn = document.getElementById('runScenarioBtn');
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                btn.innerHTML = originalText;
+            });
+        });
+
+        // Function to restart form
+        function restartForm() {
+            // Show the form again
+            document.querySelector('form').style.display = 'block';
+
+            // Clear the results
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('scenarioParams').classList.add('hidden');
+            document.getElementById('runScenarioBtn').disabled = true;
+
+            // Reset form
+            document.getElementById('scenarioForm').reset();
+            document.getElementById('scenario_type').value = '';
+        }
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-5xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center mb-6">
+            <i class="fas fa-project-diagram text-purple-600 text-2xl mr-3"></i>
+            <h1 class="text-2xl font-bold text-gray-800">Run Scenario Analysis</h1>
+        </div>
+
+        <form method="post" id="scenarioForm" class="bg-gray-50 p-6 rounded-lg">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label for="scenario_type" class="block text-gray-700 font-medium mb-3">Scenario Type</label>
+                <select id="scenario_type" name="scenario_type" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base">
+                    <option value="">Select a scenario type</option>
+                    <option value="revenue_change">Revenue Change</option>
+                    <option value="expense_reduction">Expense Reduction</option>
+                    <option value="investment_impact">Investment Impact</option>
+                </select>
+            </div>
+
+            <div id="scenarioParams" class="mb-6 hidden">
+                <!-- Dynamic parameters will be loaded here based on scenario type -->
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <a href="{% url 'analytics_dashboard' %}"
+                   class="btn-secondary w-full sm:w-auto">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Analytics
+                </a>
+                <button type="submit" id="runScenarioBtn"
+                        class="btn-primary w-full sm:w-auto"
+                        disabled>
+                    <i class="fas fa-play-circle mr-2"></i>
+                    Run Scenario
+                </button>
+            </div>
+        </form>
+
+        <div id="result" class="mt-6 bg-white border border-gray-200 rounded-lg shadow-sm hidden">
+            <div class="p-5">
+                <div id="resultContent" class="bg-white rounded-md"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

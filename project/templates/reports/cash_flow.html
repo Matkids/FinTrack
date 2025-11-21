@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Cash Flow Statement - FinTrack{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-water text-blue-600 mr-3"></i>
+            Cash Flow Statement
+        </h1>
+        <a href="{% url 'reports_list' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Reports
+        </a>
+    </div>
+    <p class="text-gray-600">For the period: {{ start_date }} to {{ end_date }}</p>
+</div>
+
+<!-- Cash Flow Statement -->
+<div class="bg-white rounded-lg shadow-lg p-6">
+    <!-- Operating Activities -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-building text-blue-600 mr-2"></i>
+            Cash Flow from Operating Activities
+        </h2>
+        <div class="ml-4">
+            <div class="flex justify-between py-2 border-b border-gray-200">
+                <span>Cash Inflows from Operations</span>
+                <span class="text-green-600">+${{ operating_inflows|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-200">
+                <span>Cash Outflows from Operations</span>
+                <span class="text-red-600">-${{ operating_outflows|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-200 font-bold text-lg">
+                <span>Net Cash from Operating Activities</span>
+                <span class="{% if operating_net >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if operating_net >= 0 %}+{% else %}-{% endif %}${{ operating_net_abs|floatformat:2 }}
+                </span>
+            </div>
+
+            <!-- Detailed transactions for operating activities -->
+            {% if operating_transactions %}
+            <div class="mt-4 bg-blue-50 p-3 rounded">
+                <h3 class="font-medium text-gray-800 mb-2">Operating Transactions Detail:</h3>
+                <div class="max-h-40 overflow-y-auto">
+                    {% for trans in operating_transactions %}
+                    <div class="flex justify-between text-sm py-1 border-b border-blue-100">
+                        <span>{{ trans.date|date:"M d" }} - {{ trans.category.name }}</span>
+                        <span class="{% if trans.type == 'income' %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if trans.type == 'income' %}+{% else %}-{% endif %}${{ trans.amount|floatformat:2 }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Investing Activities -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-chart-line text-green-600 mr-2"></i>
+            Cash Flow from Investing Activities
+        </h2>
+        <div class="ml-4">
+            <div class="flex justify-between py-2 border-b border-gray-200">
+                <span>Cash Inflows from Investing</span>
+                <span class="text-green-600">+${{ investing_inflows|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-200">
+                <span>Cash Outflows from Investing</span>
+                <span class="text-red-600">-${{ investing_outflows|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-200 font-bold text-lg">
+                <span>Net Cash from Investing Activities</span>
+                <span class="{% if investing_net >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if investing_net >= 0 %}+{% else %}-{% endif %}${{ investing_net_abs|floatformat:2 }}
+                </span>
+            </div>
+
+            <!-- Detailed transactions for investing activities -->
+            {% if investing_transactions %}
+            <div class="mt-4 bg-green-50 p-3 rounded">
+                <h3 class="font-medium text-gray-800 mb-2">Investing Transactions Detail:</h3>
+                <div class="max-h-40 overflow-y-auto">
+                    {% for trans in investing_transactions %}
+                    <div class="flex justify-between text-sm py-1 border-b border-green-100">
+                        <span>{{ trans.date|date:"M d" }} - {{ trans.category.name }}</span>
+                        <span class="{% if trans.type == 'income' %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if trans.type == 'income' %}+{% else %}-{% endif %}${{ trans.amount|floatformat:2 }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Financing Activities -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-hand-holding-usd text-purple-600 mr-2"></i>
+            Cash Flow from Financing Activities
+        </h2>
+        <div class="ml-4">
+            <div class="flex justify-between py-2 border-b border-gray-200">
+                <span>Cash Inflows from Financing</span>
+                <span class="text-green-600">+${{ financing_inflows|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-200">
+                <span>Cash Outflows from Financing</span>
+                <span class="text-red-600">-${{ financing_outflows|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-200 font-bold text-lg">
+                <span>Net Cash from Financing Activities</span>
+                <span class="{% if financing_net >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if financing_net >= 0 %}+{% else %}-{% endif %}${{ financing_net_abs|floatformat:2 }}
+                </span>
+            </div>
+
+            <!-- Detailed transactions for financing activities -->
+            {% if financing_transactions %}
+            <div class="mt-4 bg-purple-50 p-3 rounded">
+                <h3 class="font-medium text-gray-800 mb-2">Financing Transactions Detail:</h3>
+                <div class="max-h-40 overflow-y-auto">
+                    {% for trans in financing_transactions %}
+                    <div class="flex justify-between text-sm py-1 border-b border-purple-100">
+                        <span>{{ trans.date|date:"M d" }} - {{ trans.category.name }}</span>
+                        <span class="{% if trans.type == 'income' %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if trans.type == 'income' %}+{% else %}-{% endif %}${{ trans.amount|floatformat:2 }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="border-t-2 border-gray-300 pt-4 bg-gray-50 p-4 rounded-lg">
+        <div class="flex justify-between items-center text-xl font-bold">
+            <span>Net Increase/Decrease in Cash</span>
+            <span class="{% if net_change >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {% if net_change >= 0 %}+{% else %}-{% endif %}${{ net_change_abs|floatformat:2 }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="mt-6 flex justify-end space-x-3">
+    <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg flex items-center">
+        <i class="fas fa-print mr-2"></i>Print Report
+    </button>
+    <a href="{% url 'reports_list' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Reports
+    </a>
+</div>
+{% endblock %}

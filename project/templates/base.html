@@ -1,0 +1,188 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FinTrack - Company Financial Management{% endblock %}</title>
+    <link href="{% static 'dist/output.css' %}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100 min-h-screen">
+    
+    <!-- Navigation -->
+    <nav class="bg-indigo-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-chart-line text-white text-2xl mr-2"></i>
+                        <span class="font-bold text-xl">FinTrack</span>
+                    </div>
+                    <div class="hidden md:ml-6 md:flex md:space-x-8">
+                        <a href="{% url 'dashboard' %}" class="border-b-2 border-white px-1 pt-1 text-sm font-medium">Dashboard</a>
+                        <a href="{% url 'transactions_list' %}" class="border-transparent hover:border-gray-300 border-b-2 px-1 pt-1 text-sm font-medium hover:text-gray-200">Transactions</a>
+                        <a href="{% url 'assets_list' %}" class="border-transparent hover:border-gray-300 border-b-2 px-1 pt-1 text-sm font-medium hover:text-gray-200">Assets</a>
+                        <a href="{% url 'investments_list' %}" class="border-transparent hover:border-gray-300 border-b-2 px-1 pt-1 text-sm font-medium hover:text-gray-200">Investments</a>
+                        <a href="{% url 'reports_list' %}" class="border-transparent hover:border-gray-300 border-b-2 px-1 pt-1 text-sm font-medium hover:text-gray-200">Reports</a>
+                        <a href="{% url 'analytics_dashboard' %}" class="border-transparent hover:border-gray-300 border-b-2 px-1 pt-1 text-sm font-medium hover:text-gray-200">Analytics</a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    {% if user.is_authenticated %}
+                        <div class="relative ml-3">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm font-medium">{{ user.username }}</span>
+                                <a href="{% url 'logout' %}" class="text-sm font-medium text-gray-300 hover:text-white">Logout</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-sm font-medium text-gray-300 hover:text-white">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 mt-4">
+            {% for message in messages %}
+                <div class="p-4 mb-2 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl mx-auto px-4 py-6 w-full {% block main_classes %}{% endblock %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 w-full">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <p class="text-center text-gray-500 text-sm">
+                &copy; {% now "Y" %} FinTrack - Company Financial Management Application. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Modal for viewing attachments -->
+    <div id="attachmentModal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full relative">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 id="modalFileName" class="text-lg font-medium text-gray-900 truncate max-w-xs"></h3>
+                <div class="flex space-x-2">
+                    <a id="downloadFileBtn" href="#" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full"
+                       title="Download File">
+                        <i class="fas fa-download"></i>
+                    </a>
+                    <button onclick="closeAttachmentModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded-full"
+                            title="Close Modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-4 flex items-center justify-center min-h-[400px]">
+                <div id="modalFileContent" class="text-center w-full">
+                    <p class="text-gray-600">Loading file...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openAttachmentModal(fileUrl, fileName) {
+            const modal = document.getElementById('attachmentModal');
+            const fileNameEl = document.getElementById('modalFileName');
+            const fileContentEl = document.getElementById('modalFileContent');
+            const downloadBtn = document.getElementById('downloadFileBtn');
+
+            if (!modal || !fileNameEl || !fileContentEl || !downloadBtn) {
+                console.error('Modal elements not found');
+                return;
+            }
+
+            // Set the file name and download link
+            fileNameEl.textContent = fileName;
+            downloadBtn.href = fileUrl;
+
+            // Determine file type and display accordingly
+            const fileExtension = fileName.toLowerCase().split('.').pop();
+            let contentHtml = '';
+
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(fileExtension)) {
+                // Image file
+                contentHtml = '<img src="' + fileUrl + '" alt="' + fileName + '" class="max-h-[60vh] max-w-full object-contain" onerror="this.parentElement.innerHTML = \'<p class=&quot;text-red-600&quot;>Unable to load image</p>\'">';
+            } else if (['pdf'].includes(fileExtension)) {
+                // PDF file
+                contentHtml = '<iframe src="' + fileUrl + '" class="w-full h-[60vh] border-0" title="PDF Viewer" onerror="this.parentElement.innerHTML = \'<p class=&quot;text-red-600&quot;>Unable to load PDF</p>\'"></iframe>';
+            } else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'].includes(fileExtension)) {
+                // Document file - show icon and download option
+                let iconClass = 'fas fa-file-word text-blue-500 text-6xl';
+                if (['xls', 'xlsx'].includes(fileExtension)) {
+                    iconClass = 'fas fa-file-excel text-green-500 text-6xl';
+                } else if (['ppt', 'pptx'].includes(fileExtension)) {
+                    iconClass = 'fas fa-file-powerpoint text-red-500 text-6xl';
+                } else if (['txt', 'csv'].includes(fileExtension)) {
+                    iconClass = 'fas fa-file-alt text-gray-500 text-6xl';
+                }
+
+                contentHtml = '<div class="flex flex-col items-center justify-center">' +
+                    '<i class="' + iconClass + ' mb-4"></i>' +
+                    '<p class="text-gray-700 mb-4">This is a ' + fileExtension.toUpperCase() + ' document</p>' +
+                    '<a href="' + fileUrl + '" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">' +
+                        'Open in New Tab <i class="fas fa-external-link-alt ml-2"></i>' +
+                    '</a>' +
+                '</div>';
+            } else {
+                // Other file types - show generic icon and download option
+                contentHtml = '<div class="flex flex-col items-center justify-center">' +
+                    '<i class="fas fa-file text-6xl text-gray-400 mb-4"></i>' +
+                    '<p class="text-gray-700 mb-2">File: ' + fileName + '</p>' +
+                    '<p class="text-gray-500 mb-4">Click below to download</p>' +
+                    '<a href="' + fileUrl + '" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg" target="_blank">' +
+                        '<i class="fas fa-download mr-2"></i>Download File' +
+                    '</a>' +
+                '</div>';
+            }
+
+            // Update the content and show the modal
+            fileContentEl.innerHTML = contentHtml;
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden'); // Prevent background scrolling
+        }
+
+        function closeAttachmentModal() {
+            const modal = document.getElementById('attachmentModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden'); // Allow scrolling again
+            }
+        }
+
+        // Close modal when clicking outside content area
+        document.getElementById('attachmentModal').addEventListener('click', function(e) {
+            if (e.target.id === 'attachmentModal') {
+                closeAttachmentModal();
+            }
+        });
+
+        // Close modal when pressing Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('attachmentModal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    closeAttachmentModal();
+                }
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

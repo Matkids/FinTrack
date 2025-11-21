@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Profit & Loss Statement - FinTrack{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-900">Profit & Loss Statement</h1>
+        <a href="{% url 'reports_list' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+            Back to Reports
+        </a>
+    </div>
+    <p class="text-gray-600">For the period: {{ start_date }} to {{ end_date }}</p>
+</div>
+
+<!-- P&L Statement -->
+<div class="bg-white rounded-lg shadow-lg p-6">
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-money-bill-wave text-green-600 mr-2"></i>
+            Revenue
+        </h2>
+        <div class="ml-4">
+            {% if income_by_category %}
+                {% for category, amount in income_by_category.items %}
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span>{{ category }}</span>
+                        <span class="text-green-600">${{ amount|floatformat:2 }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span>No income transactions</span>
+                    <span class="text-green-600">$0.00</span>
+                </div>
+            {% endif %}
+            <div class="flex justify-between py-3 border-t-2 border-gray-300 font-bold text-lg">
+                <span>Total Income</span>
+                <span class="text-green-600">${{ total_income|floatformat:2 }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-shopping-cart text-red-600 mr-2"></i>
+            Expenses
+        </h2>
+        <div class="ml-4">
+            {% if expense_by_category %}
+                {% for category, amount in expense_by_category.items %}
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span>{{ category }}</span>
+                        <span class="text-red-600">${{ amount|floatformat:2 }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span>No expense transactions</span>
+                    <span class="text-red-600">$0.00</span>
+                </div>
+            {% endif %}
+            <div class="flex justify-between py-3 border-t-2 border-gray-300 font-bold text-lg">
+                <span>Total Expenses</span>
+                <span class="text-red-600">${{ total_expenses|floatformat:2 }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="border-t-2 border-gray-300 pt-4">
+        <div class="flex justify-between items-center text-xl font-bold">
+            <span>Net Profit/Loss</span>
+            <span class="{% if net_profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {% if net_profit >= 0 %}+{% else %}-{% endif %}${{ net_profit|absolute|floatformat:2 }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="mt-6 flex justify-end space-x-3">
+    <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded flex items-center">
+        <i class="fas fa-print mr-2"></i>Print Report
+    </button>
+    <a href="{% url 'reports_list' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Reports
+    </a>
+</div>
+{% endblock %}

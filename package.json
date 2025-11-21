@@ -1,0 +1,18 @@
+{
+  "name": "fintrack",
+  "version": "1.0.0",
+  "description": "Company Financial Management Application",
+  "main": "index.js",
+  "scripts": {
+    "build-css": "tailwindcss build ./project/static/src/input.css -o ./project/static/dist/output.css",
+    "watch-css": "tailwindcss build ./project/static/src/input.css -o ./project/static/dist/output.css --watch",
+    "dev": "concurrently \"npm run watch-css\" \"python project/manage.py runserver\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.3.0",
+    "concurrently": "^8.0.0"
+  }
+}

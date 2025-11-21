@@ -1,0 +1,7 @@
+django
+psycopg2-binary
+pillow
+python-decouple
+pandas
+numpy
+scikit-learn

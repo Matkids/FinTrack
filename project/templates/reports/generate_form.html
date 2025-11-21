@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate {{ report_type|title }} Report{% endblock %}
+
+{% block extra_css %}
+<style>
+    .datepicker-container {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .date-input-group {
+        flex: 1;
+    }
+    
+    .date-input-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #4b5563;
+    }
+    
+    .date-input-group input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .date-input-group input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 134, 246, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center mb-6">
+            <i class="fas fa-chart-bar text-blue-600 text-2xl mr-3"></i>
+            <h1 class="text-2xl font-bold text-gray-800">Generate {{ report_type|title }} Report</h1>
+        </div>
+        
+        <form method="get" action="{% url 'generate_report' report_type %}" id="reportForm" class="bg-gray-50 p-6 rounded-lg mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="date-input-group">
+                    <label for="start_date" class="block text-gray-700 font-medium mb-2">Start Date</label>
+                    <input type="date" id="start_date" name="start_date" 
+                           value="{% now 'Y-m-01' %}" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base">
+                    <p class="text-gray-500 text-sm mt-2">Select start date for the report period</p>
+                </div>
+                
+                <div class="date-input-group">
+                    <label for="end_date" class="block text-gray-700 font-medium mb-2">End Date</label>
+                    <input type="date" id="end_date" name="end_date" 
+                           value="{% now 'Y-m-d' %}" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base">
+                    <p class="text-gray-500 text-sm mt-2">Select end date for the report period</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <a href="{% url 'reports_list' %}" 
+                   class="px-4 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition duration-200 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Reports
+                </a>
+                <button type="submit" id="generateReportBtn"
+                        class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition duration-200 flex items-center">
+                    <i class="fas fa-chart-line mr-2"></i>
+                    Generate Report
+                </button>
+            </div>
+        </form>
+        
+        <div class="border-t border-gray-200 pt-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Available Reports</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{% url 'generate_report' 'pnl' %}?start_date={{ request.GET.start_date|default:'' }}&end_date={{ request.GET.end_date|default:'' }}"
+                   class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold py-4 px-4 rounded-lg text-center transition duration-200">
+                    <i class="fas fa-file-invoice-dollar text-xl mb-2 block"></i>
+                    <span>Profit & Loss</span>
+                </a>
+                <a href="{% url 'generate_report' 'cash_flow' %}?start_date={{ request.GET.start_date|default:'' }}&end_date={{ request.GET.end_date|default:'' }}"
+                   class="bg-green-100 hover:bg-green-200 text-green-800 font-bold py-4 px-4 rounded-lg text-center transition duration-200">
+                    <i class="fas fa-water text-xl mb-2 block"></i>
+                    <span>Cash Flow</span>
+                </a>
+                <a href="{% url 'generate_report' 'balance_sheet' %}?as_of_date={{ request.GET.end_date|default:''|date:'Y-m-d' }}"
+                   class="bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold py-4 px-4 rounded-lg text-center transition duration-200">
+                    <i class="fas fa-balance-scale text-xl mb-2 block"></i>
+                    <span>Balance Sheet</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
