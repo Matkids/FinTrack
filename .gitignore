@@ -230,3 +230,5 @@ target/
 
 # mkdocs
 /site
+
+node_modules/
