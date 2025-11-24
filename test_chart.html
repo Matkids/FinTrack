@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chart Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Chart Test</h1>
+    <canvas id="testChart" width="400" height="200"></canvas>
+
+    <script>
+        console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+
+        const ctx = document.getElementById('testChart').getContext('2d');
+        const testChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jun 2024', 'Jul 2024', 'Aug 2024', 'Sep 2024', 'Oct 2024', 'Nov 2024'],
+                datasets: [{
+                    label: 'Income',
+                    data: [5000, 5500, 5200, 5800, 6000, 6200],
+                    borderColor: 'rgb(74, 222, 128)',
+                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                    tension: 0.1
+                }, {
+                    label: 'Expenses',
+                    data: [3200, 3500, 3300, 3800, 4000, 4200],
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        console.log('Chart created successfully');
+    </script>
+</body>
+</html>

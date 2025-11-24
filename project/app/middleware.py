@@ -17,20 +17,22 @@ class RoleBasedAccessMiddleware:
         return response
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        # Skip middleware for admin, login, and logout pages
-        if request.path.startswith('/admin/') or request.path in ['/login/', '/logout/']:
+        # Skip middleware for admin, login, logout pages, and API endpoints
+        if (request.path.startswith('/admin/') or
+            request.path in ['/login/', '/logout/'] or
+            request.path.startswith('/api/')):
             return None
-            
+
         # Check if user is authenticated
         if not request.user.is_authenticated:
             return redirect('login')
-            
+
         # If user doesn't have a profile, redirect to login (they might not be properly set up)
         try:
             user_profile = request.user.userprofile
         except UserProfile.DoesNotExist:
             return redirect('login')
-            
+
         # The role-based restrictions will be handled in individual views
         # This middleware ensures that all authenticated users have a valid profile
         return None
@@ -44,15 +46,18 @@ def role_required(allowed_roles):
         def _wrapped_view(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 return redirect('login')
-                
+
             try:
                 user_role = request.user.userprofile.role
             except UserProfile.DoesNotExist:
                 return redirect('login')
-                
+
             if user_role not in allowed_roles:
-                return HttpResponseForbidden("You don't have permission to access this page.")
-                
+                from django.shortcuts import render
+                return render(request, '403.html',
+                             {'message': "You don't have permission to access this page."},
+                             status=403)
+
             return view_func(request, *args, **kwargs)
         return _wrapped_view
     return decorator

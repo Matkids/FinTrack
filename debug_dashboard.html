@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Debug</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .chart-container { margin: 20px 0; }
+        .debug-info { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+        canvas { border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Dashboard Chart Debug</h1>
+
+    <div class="debug-info">
+        <h3>Debug Information:</h3>
+        <p id="chartjs-status">Chart.js Status: Checking...</p>
+        <p id="api-status">API Status: Checking...</p>
+        <p id="data-status">Data Status: Checking...</p>
+    </div>
+
+    <div class="chart-container">
+        <h2>Monthly Cash Flow</h2>
+        <div style="height: 400px; position: relative;">
+            <canvas id="cashFlowChart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h2>Expense Breakdown</h2>
+        <div style="height: 400px; position: relative;">
+            <canvas id="expenseChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        console.log('Debug dashboard loading...');
+
+        // Check Chart.js
+        const chartJsElement = document.getElementById('chartjs-status');
+        if (typeof Chart !== 'undefined') {
+            chartJsElement.innerHTML = 'Chart.js Status: ✅ Loaded successfully';
+            chartJsElement.style.color = 'green';
+        } else {
+            chartJsElement.innerHTML = 'Chart.js Status: ❌ Not loaded';
+            chartJsElement.style.color = 'red';
+        }
+
+        // Test API
+        const apiElement = document.getElementById('api-status');
+        fetch('/api/dashboard-data/')
+            .then(response => {
+                if (response.ok) {
+                    apiElement.innerHTML = 'API Status: ✅ Accessible';
+                    apiElement.style.color = 'green';
+                    return response.json();
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            })
+            .then(data => {
+                console.log('API Data:', data);
+                const dataElement = document.getElementById('data-status');
+                dataElement.innerHTML = 'Data Status: ✅ Received data successfully';
+                dataElement.style.color = 'green';
+
+                // Create charts with the data
+                createCharts(data);
+            })
+            .catch(error => {
+                console.error('API Error:', error);
+                apiElement.innerHTML = `API Status: ❌ ${error.message}`;
+                apiElement.style.color = 'red';
+
+                // Use sample data if API fails
+                const dataElement = document.getElementById('data-status');
+                dataElement.innerHTML = 'Data Status: ⚠️ Using sample data';
+                dataElement.style.color = 'orange';
+
+                createCharts(getSampleData());
+            });
+
+        function getSampleData() {
+            return {
+                'monthly_income': [5000.0, 5500.0, 5200.0, 5800.0, 6000.0, 6200.0],
+                'monthly_expenses': [3200.0, 3500.0, 3300.0, 3800.0, 4000.0, 4200.0],
+                'months': ['Jun 2024', 'Jul 2024', 'Aug 2024', 'Sep 2024', 'Oct 2024', 'Nov 2024'],
+                'expense_categories': {
+                    'labels': ['Food', 'Transport', 'Entertainment', 'Utilities', 'Healthcare'],
+                    'values': [800.0, 400.0, 300.0, 500.0, 200.0],
+                }
+            };
+        }
+
+        function createCharts(data) {
+            console.log('Creating charts with data:', data);
+
+            // Cash Flow Chart
+            const cashFlowCtx = document.getElementById('cashFlowChart').getContext('2d');
+            new Chart(cashFlowCtx, {
+                type: 'line',
+                data: {
+                    labels: data.months,
+                    datasets: [{
+                        label: 'Income',
+                        data: data.monthly_income,
+                        borderColor: 'rgb(74, 222, 128)',
+                        backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                        tension: 0.1
+                    }, {
+                        label: 'Expenses',
+                        data: data.monthly_expenses,
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Monthly Income vs Expenses'
+                        }
+                    }
+                }
+            });
+
+            // Expense Chart
+            const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+            new Chart(expenseCtx, {
+                type: 'pie',
+                data: {
+                    labels: data.expense_categories.labels,
+                    datasets: [{
+                        data: data.expense_categories.values,
+                        backgroundColor: [
+                            'rgb(255, 99, 132)',
+                            'rgb(54, 162, 235)',
+                            'rgb(255, 205, 86)',
+                            'rgb(75, 192, 192)',
+                            'rgb(153, 102, 255)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Expense Categories'
+                        }
+                    }
+                }
+            });
+
+            console.log('Charts created successfully!');
+        }
+    </script>
+</body>
+</html>

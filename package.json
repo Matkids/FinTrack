@@ -6,7 +6,7 @@
   "scripts": {
     "build-css": "tailwindcss build ./project/static/src/input.css -o ./project/static/dist/output.css",
     "watch-css": "tailwindcss build ./project/static/src/input.css -o ./project/static/dist/output.css --watch",
-    "dev": "concurrently \"npm run watch-css\" \"python project/manage.py runserver\""
+    "dev": "concurrently \"npm run watch-css\" \"cd project && ../venv/bin/python3 manage.py runserver\""
   },
   "keywords": [],
   "author": "",

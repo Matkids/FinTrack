@@ -1,43 +1,17 @@
-# Virtual environment
-venv/
-env/
-ENV/
+# Django Gitignore File for FinTrack Project
+# https://github.com/github/gitignore/blob/main/Python.gitignore
 
-# Environment variables file
-.env
-.env.local
-
-# Database
-*.sqlite3
-*.sqlite3-journal
-
-# Media files (user uploads)
-/media/
-uploads/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Coverage reports
-htmlcov/
-.coverage
-
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -51,17 +25,208 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# Django
-*.pot
-*.pyo
 MANIFEST
-db.sqlite3
-media/
-staticfiles/
 
-# Local configuration files
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+secrets.json
+config/secrets.py
+config/local_settings.py
+
+# Database files
+*.sqlite3
+*.sqlite3-journal
+*.db
+*.db3
+database/
+db/
+database_backups/
+
+# Django specific
 local_settings.py
+*.log
+logs/
+django.log
+staticfiles/
+media/
+uploads/
+temp_uploads/
+sessions/
+
+# Media files (user uploads and financial documents)
+/media/
+uploads/
+user_files/
+financial_documents/
+transaction_attachments/
+report_exports/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Unit test / coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.tox/
+.nox/
+
+# Translations
+*.mo
+*.pot
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Frontend assets (if using npm/yarn)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+.tmp/
+.temp/
+cache/
+
+# Financial data exports and sensitive reports
+exports/
+reports/generated/
+financial_exports/
+data_dumps/
+*.csv.bak
+*.xlsx.bak
+
+# Monitoring and analytics
+*.monitoring
+*.pid
+*.out
+*.err
+
+# SSL certificates (NEVER commit these!)
+*.pem
+*.key
+*.crt
+*.csr
+ssl/
+
+# Docker
+.dockerignore
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# Localization
+*.mo
+
+# Sentry
+.sentryclirc
+
+# Local development files
+dev_settings.py
+production_settings.py
+staging_settings.py
+local.py
+override.py
+
+# Backup and archive files
+backups/
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+node_modules/
+
+# Cache directories
+.cache/
+*.cache
+.django_cache
+
+# Session files
+*.session
+sessions/
+
+# Database migrations for development (if you want to keep them clean)
+# Uncomment the line below if you don't want to commit migrations
+# */migrations/00*.py
+
+# Requirements files (keep production requirements, ignore dev ones)
+requirements-dev.txt
+requirements-test.txt
+
+# Documentation build
+docs/_build/
+site/
+
+# PyBuilder
+target/
+
+# Rope project settings
+.ropeproject
+
+# mkdocs
+/site

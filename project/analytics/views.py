@@ -17,9 +17,10 @@ from .services import (
     RecommendationService, ScenarioAnalysisService
 )
 from app.models import Transaction, Category, Asset, Investment
+from app.middleware import role_required
 
 
-@login_required
+@role_required(['super_admin', 'finance_manager'])
 def analytics_dashboard(request):
     """
     Analytics dashboard showing advanced insights and predictions
@@ -53,7 +54,7 @@ def analytics_dashboard(request):
     return render(request, 'analytics/dashboard.html', context)
 
 
-@login_required
+@role_required(['super_admin', 'finance_manager', 'accountant'])
 def generate_cash_flow_forecast(request):
     """
     Generate cash flow forecast based on historical data
@@ -82,7 +83,7 @@ def generate_cash_flow_forecast(request):
         }, status=500)
 
 
-@login_required
+@role_required(['super_admin', 'finance_manager', 'accountant'])
 def detect_expense_anomalies(request):
     """
     Detect unusual expenses using anomaly detection algorithms
@@ -102,7 +103,7 @@ def detect_expense_anomalies(request):
         }, status=500)
 
 
-@login_required
+@role_required(['super_admin', 'finance_manager', 'accountant'])
 def generate_recommendations(request):
     """
     Generate smart recommendations based on financial data analysis
@@ -203,7 +204,7 @@ def api_analytics_data(request):
     return JsonResponse(data)
 
 
-@login_required
+@role_required(['super_admin', 'finance_manager', 'accountant'])
 def run_scenario_analysis(request):
     """
     Run what-if scenario analysis

@@ -13,7 +13,7 @@ CLAUDE_PACKAGE="@anthropic-ai/claude-code"
 CONFIG_DIR="$HOME/.claude"
 CONFIG_FILE="$CONFIG_DIR/settings.json"
 API_BASE_URL="https://api.z.ai/api/anthropic"
-API_KEY_URL="https://z.ai/manage-apikey/apikey-list"
+API_KEY_URL="d6f54479e1ab4a92b74c3f9051545957.PefeUXsmyMOpdGTJ"
 API_TIMEOUT_MS=3000000
 
 # ========================

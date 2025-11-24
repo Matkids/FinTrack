@@ -55,8 +55,9 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ report.start_date }} to {{ report.end_date }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {% if report.file_path %}
-                        <a href="{{ report.file_path.url }}" class="text-indigo-600 hover:text-indigo-900 mr-2">
-                            <i class="fas fa-download"></i>
+                        <a href="{{ report.file_path.url }}" class="inline-flex items-center text-indigo-600 hover:text-indigo-900" target="_blank">
+                            <i class="fas fa-file-pdf text-red-500 mr-2"></i>
+                            <span>Download</span>
                         </a>
                     {% else %}
                         <span class="text-gray-400">Not available</span>
