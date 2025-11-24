@@ -232,3 +232,5 @@ target/
 /site
 
 node_modules/
+# Ignore all shell scripts
+*.sh
