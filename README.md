@@ -30,7 +30,7 @@ DB_PORT=5432
 DJANGO_SETTINGS_MODULE=project.settings
 
 # Security Settings
-SECRET_KEY=gpf$-vd=@ry!xvvr!@xk(w7*xh#qdjqi5sb34g2=5+kr5!%nt8
+SECRET_KEY=You Sec Key Postgresql
 DEBUG=True
 ALLOWED_HOSTS=127.0.0.1,localhost
 
